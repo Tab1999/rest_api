@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Shopping Cart</title>
+</head>
+
+<body>
+    <!-- <h1>Product Management</h1> -->
+    <form id="productForm">
+        <input type="text" id="productName" placeholder="Product Name" required>
+        <input type="number" id="sellingPrice" placeholder="Selling Price" required>
+        <button type="button" id="addItem">Add Item</button>
+    </form>
+
+    <div id="productList">
+        <h2>Products</h2>
+        <ul id="items"></ul>
+        <p>Total Price: <span id="totalNetWorth">0</span></p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <script>
+       
+            const API_URL = 'https://crudcrud.com/api/ddc6cf8ba24440af89396d9b2040f5d9/products';
+
+            const productForm = document.getElementById('productForm');
+            const productNameInput = document.getElementById('productName');
+            const sellingPriceInput = document.getElementById('sellingPrice');
+            const addItemButton = document.getElementById('addItem');
+            const itemsList = document.getElementById('items');
+            const totalNetWorth = document.getElementById('totalNetWorth');
+
+            let productList = [];
+
+          
+            function addProductItem(product) {
+                productList.push(product);
+                const li = document.createElement('li');
+                li.innerHTML = `${product.productName} - ${product.sellingPrice} <button data-id="${product._id}">Delete</button>`;
+                itemsList.appendChild(li);
+                updateTotalNetWorth();
+            }
+
+            
+            function updateTotalNetWorth() {
+                const total = productList.reduce((total, product) => total + product.sellingPrice, 0);
+                totalNetWorth.textContent = total;
+            }
+
+            
+            function deleteProductItem(id) {
+                axios.delete(`${API_URL}/${id}`)
+                    .then(() => {
+                        productList = productList.filter(product => product._id !== id);
+                        document.querySelector(`[data-id="${id}"]`).parentNode.remove();
+                        updateTotalNetWorth();
+                    })
+                    .catch(error => console.error(error));
+            }
+
+            addItemButton.addEventListener('click', () => {
+                const productName = productNameInput.value;
+                const sellingPrice = parseFloat(sellingPriceInput.value);
+
+                if (productName && !isNaN(sellingPrice)) {
+                    axios.post(API_URL, { productName, sellingPrice })
+                        .then(response => {
+                            addProductItem(response.data);
+                            productNameInput.value = '';
+                            sellingPriceInput.value = '';
+                        })
+                        .catch(error => console.error(error));
+                }
+            });
+
+            
+            itemsList.addEventListener('click', (event) => {
+                if (event.target.tagName === 'BUTTON') {
+                    const id = event.target.getAttribute('data-id');
+                    deleteProductItem(id);
+                }
+            });
+
+            
+            // axios.get(API_URL)
+            //     .then(response => {
+            //         productList = response.data;
+            //         productList.forEach(product => addProductItem(product));
+            //     })
+            //     .catch(error => console.error(error));
+            function fetchProductData() {
+                    axios.get(API_URL)
+                        .then(response => {
+                            productList = response.data;
+                            itemsList.innerHTML = ''; 
+                            productList.forEach(product => addProductItem(product));
+                        })
+                        .catch(error => console.error(error));
+                }
+
+                window.addEventListener('load', () => {
+                        fetchProductData();
+                    });
+
+                // fetchProductData();
+
+    </script>
+</body>
+
+</html>
