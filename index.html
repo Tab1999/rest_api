@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Shopping Cart</title>
+</head>
+
+
+    
+
+    <form id="product-form">
+        <input type="text" id="product-name" placeholder="Product Name" required>
+        <input type="number" id="product-price" placeholder="Product Price" required>
+        <button type="submit">Add Product</button>
+    </form>
+
+    <h2>Product List</h2>
+    <ul id="product-list"></ul>
+
+    <p>Total Price: <span id="total-price">00</span></p>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const apiUrl = 'https://crudcrud.com/api/179ebf2b4e6444d2ae566aad87151018/products'; // Replace with your API key
+
+            // Function to fetch and display products
+            const fetchProducts = async () => {
+                try {
+                    const response = await axios.get(apiUrl);
+                    const productList = response.data;
+                    const productListContainer = document.getElementById('product-list');
+                    productListContainer.innerHTML = '';
+
+                    let totalPrice = 0;
+
+                    productList.forEach(product => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `${product.name} - ${product.price}`;
+
+                        // Add a delete button for each product
+                        const deleteButton = document.createElement('button');
+                        deleteButton.innerText = 'Delete';
+                        deleteButton.addEventListener('click', () => {
+                            deleteProduct(product._id);
+                        });
+
+                        listItem.appendChild(deleteButton);
+                        productListContainer.appendChild(listItem);
+
+                        // Calculate the total price
+                        totalPrice += parseFloat(product.price);
+                    });
+
+                    // Display the total price
+                    document.getElementById('total-price').textContent = totalPrice;
+                } catch (error) {
+                    console.error(error);
+                }
+            };
+
+            // Function to add a new product
+            const addProduct = async (name, price) => {
+                try {
+                    await axios.post(apiUrl, { name, price });
+                    document.getElementById('product-name').value = '';
+                    document.getElementById('product-price').value = '';
+                    await fetchProducts();
+                } catch (error) {
+                    console.error(error);
+                }
+            };
+
+            // Function to delete a product
+            const deleteProduct = async (productId) => {
+                try {
+                    await axios.delete(`${apiUrl}/${productId}`);
+                    await fetchProducts();
+                } catch (error) {
+                    console.error(error);
+                }
+            };
+
+            // Submit form to add a product
+            const productForm = document.getElementById('product-form');
+            productForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const productName = document.getElementById('product-name').value;
+                const productPrice = document.getElementById('product-price').value;
+                await addProduct(productName, productPrice);
+            });
+
+            // Initial fetch to load products
+            fetchProducts();
+
+    </script>
+</body>
+
+</html>
